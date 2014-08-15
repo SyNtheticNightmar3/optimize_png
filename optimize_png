@@ -51,9 +51,8 @@ if ! type optipng &>/dev/null; then
 #       export CC=~/gcc-toolchains/arm-none-linux-gnueabi-4.8.3/bin/arm-none-linux-gnueabi;
         make install;
         cd ..;
-        rm -rf optipng-$OPTIPNG_VER.tar.gz;
         if type optipng &>/dev/null; then
-            rm -rf optipng-$OPTIPNG_VER;
+            rm -rf optipng-$OPTIPNG_VER*;
             echo "OptiPNG installed successfully.";
         else
             echo "Something went wrong. OptiPNG not installed.";
