@@ -21,6 +21,8 @@
 
 PNG_PATH=$1;
 OPTIPNG_VER=0.7.5;
+OPTIPNG_SHA1=30b6c333d74fc0f5dc83004aace252fa3321368b;
+PNGOUT_SHA1=37514b337adb672d982b4f98668b0300f177d8d2;
 
 while getopts ":a" opt
 do
@@ -34,16 +36,28 @@ done
 
 # OptiPNG autoinstall
 if ! type optipng &>/dev/null; then
+    MISSING_TOOL=true;
     echo "OptiPNG is not installed...";
+    echo "";
     if [ `whoami` != "root" ]; then
-        echo "Run as root for automatic install or install from http://sourceforge.net/projects/optipng/";
+        echo "Run as root for automatic install or install from";
+        echo "http://sourceforge.net/projects/optipng/";
+        echo "";
     else
         echo "Automatic install will begin in 3 seconds...";
         sleep 3;
-        if [ ! -f optipng-$OPTIPNG_VER]; then
-            echo "Downloading & extracting OptiPNG source tar...";
-            wget http://downloads.sourceforge.net/project/optipng/OptiPNG/optipng-$OPTIPNG_VER/optipng-$OPTIPNG_VER.tar.gz;
+        if [ ! -f "optipng-$OPTIPNG_VER" ]; then
+            until [ "$optar_sha1" == "$OPTIPNG_SHA1" ]; do
+                echo "Downloading & extracting OptiPNG source tar...";
+                wget http://downloads.sourceforge.net/project/optipng/OptiPNG/optipng-$OPTIPNG_VER/optipng-$OPTIPNG_VER.tar.gz;
+                optar_sha1=`sha1sum "optipng-$OPTIPNG_VER.tar.gz" | sed 's/ .*//'`;
+                if [ "$optar_sha1" != "$OPTIPNG_SHA1" ]; then
+                    echo "SHA-1 checksum does not match! Redownloading...";
+                    rm -rf optipng-$OPTIPNG_VER.tar.gz;
+                fi
+            done
             tar xf optipng-$OPTIPNG_VER.tar.gz;
+            rm -rf optipng-$OPTIPNG_VER.tar.gz;
         fi
         echo "Installing optipng-$OPTIPNG_VER.";
         cd optipng-$OPTIPNG_VER;
@@ -52,44 +66,64 @@ if ! type optipng &>/dev/null; then
         make install;
         cd ..;
         if type optipng &>/dev/null; then
-            rm -rf optipng-$OPTIPNG_VER*;
+            MISSING_TOOL=false;
+            rm -rf optipng-$OPTIPNG_VER;
             echo "OptiPNG installed successfully.";
+            echo "";
         else
             echo "Something went wrong. OptiPNG not installed.";
+            echo "";
         fi
     fi
 fi
 
 # PNGOUT autoinstall
 if ! type pngout &>/dev/null; then
+    MISSING_TOOL=true;
     echo "PNGOUT is not installed...";
+    echo "";
     if [ `whoami` != "root" ]; then
-        echo "Run as root for automatic install or install from http://jonof.id.au/kenutils";
+        echo "Run as root for automatic install or install from";
+        echo "http://jonof.id.au/kenutils";
+        echo "";
     else
         echo "Automatic install will begin in 3 seconds...";
         sleep 3;
-        if [ ! -f pngout-20130221-linux ]; then
-            echo "Downloading & extracting PNGOUT tar...";
-            wget http://static.jonof.id.au/dl/kenutils/pngout-20130221-linux.tar.gz;
+        if [ ! -d "pngout-20130221-linux" ]; then
+            until [ "$potar_sha1" == "$PNGOUT_SHA1" ]; do
+                echo "Downloading & extracting PNGOUT tar...";
+                wget http://static.jonof.id.au/dl/kenutils/pngout-20130221-linux.tar.gz;
+                potar_sha1=`sha1sum "pngout-20130221-linux.tar.gz" | sed 's/ .*//'`;
+                if [ "$potar_sha1" != "$PNGOUT_SHA1" ]; then
+                    echo "SHA-1 checksum does not match! Redownloading...";
+                    rm -rf pngout-20130221-linux.tar.gz;
+                fi
+            done
             tar xf pngout-20130221-linux.tar.gz;
+            rm -rf pngout-20130221-linux.tar.gz;
         fi
         arch=$(uname -m)
-        if [ -f pngout-20130221-linux/$arch ]; then
+        if [ -d "pngout-20130221-linux/$arch" ]; then
             echo "Installing $arch pngout.";
             cp pngout-20130221-linux/$arch/pngout /usr/local/bin/pngout;
         else
             echo "PNGOUT does not support $arch.";
         fi
         if type pngout &>/dev/null; then
-            rm -rf pngout-20130221-linux*;
+            MISSING_TOOL=false;
+            rm -rf pngout-20130221-linux;
             echo "PNGOUT installed successfully.";
+            echo "";
         else
             echo "Something went wrong. PNGOUT not installed.";
+            echo "";
         fi
     fi
 fi
 
-if [ "$PNG_PATH" ]; then
+if [ "$MISSING_TOOL" == true ]; then
+    echo "Install OptiPNG and/or PNGOUT and try again.";
+elif [ "$PNG_PATH" ]; then
     for png_file in $PNG_PATH; do
         if [ -f "$png_file" ]; then
             echo "Optimizing PNG using OptiPNG for reduction...";
