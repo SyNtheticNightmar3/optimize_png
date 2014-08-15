@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# Copyright (c) 2014, Luis Cruz (AxDev Developers).
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Usage: optimize_png -a OR optimize_png /path/to/file.png
+#        Where '-a' does all PNGs recursively.
+# Tip: Add to PATH.
+
+PNG_PATH=$1;
+OPTIPNG_VER=0.7.5;
+
+while getopts ":a" opt
+do
+    case "$opt" in
+        a)
+             PNG_PATH=$(find . -name \*.png);;
+        *)
+             break;;
+    esac
+done
+
+# OptiPNG autoinstall
+if ! type optipng &>/dev/null; then
+    echo "OptiPNG is not installed...";
+    if [ `whoami` != "root" ]; then
+        echo "Run as root for automatic install or install from http://sourceforge.net/projects/optipng/";
+    else
+        echo "Automatic install will begin in 3 seconds...";
+        sleep 3;
+        if [ ! -f optipng-$OPTIPNG_VER]; then
+            echo "Downloading & extracting OptiPNG source tar...";
+            wget http://downloads.sourceforge.net/project/optipng/OptiPNG/optipng-$OPTIPNG_VER/optipng-$OPTIPNG_VER.tar.gz;
+            tar xf optipng-$OPTIPNG_VER.tar.gz;
+        fi
+        echo "Installing optipng-$OPTIPNG_VER.";
+        cd optipng-$OPTIPNG_VER;
+        ./configure;
+#       export CC=~/gcc-toolchains/arm-none-linux-gnueabi-4.8.3/bin/arm-none-linux-gnueabi;
+        make install;
+        cd ..;
+        rm -rf optipng-$OPTIPNG_VER.tar.gz;
+        if type optipng &>/dev/null; then
+            rm -rf optipng-$OPTIPNG_VER;
+            echo "OptiPNG installed successfully.";
+        else
+            echo "Something went wrong. OptiPNG not installed.";
+        fi
+    fi
+fi
+
+# PNGOUT autoinstall
+if ! type pngout &>/dev/null; then
+    echo "PNGOUT is not installed...";
+    if [ `whoami` != "root" ]; then
+        echo "Run as root for automatic install or install from http://jonof.id.au/kenutils";
+    else
+        echo "Automatic install will begin in 3 seconds...";
+        sleep 3;
+        if [ ! -f pngout-20130221-linux ]; then
+            echo "Downloading & extracting PNGOUT tar...";
+            wget http://static.jonof.id.au/dl/kenutils/pngout-20130221-linux.tar.gz;
+            tar xf pngout-20130221-linux.tar.gz;
+        fi
+        arch=$(uname -m)
+        if [ -f pngout-20130221-linux/$arch ]; then
+            echo "Installing $arch pngout.";
+            cp pngout-20130221-linux/$arch/pngout /usr/local/bin/pngout;
+        else
+            echo "PNGOUT does not support $arch.";
+        fi
+        if type pngout &>/dev/null; then
+            rm -rf pngout-20130221-linux*;
+            echo "PNGOUT installed successfully.";
+        else
+            echo "Something went wrong. PNGOUT not installed.";
+        fi
+    fi
+fi
+
+if [ "$PNG_PATH" ]; then
+    for png_file in $PNG_PATH; do
+        if [ -f "$png_file" ]; then
+            echo "Optimizing PNG using OptiPNG for reduction...";
+            optipng -o5 -strip all $png_file;
+            echo "Compressing PNG with KS-Flate compression using PNGOUT...";
+            pngout -f6 -kp -ks $png_file;
+        else
+            echo "Invalid target png.";
+        fi
+    done
+else
+    echo "No target png.";
+fi
