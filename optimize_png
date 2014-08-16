@@ -46,7 +46,7 @@ if ! type optipng &>/dev/null; then
     else
         echo "Automatic install will begin in 3 seconds...";
         sleep 3;
-        if [ ! -f "optipng-$OPTIPNG_VER" ]; then
+        if [ ! -d "optipng-$OPTIPNG_VER" ]; then
             until [ "$optar_sha1" == "$OPTIPNG_SHA1" ]; do
                 echo "Downloading & extracting OptiPNG source tar...";
                 wget http://downloads.sourceforge.net/project/optipng/OptiPNG/optipng-$OPTIPNG_VER/optipng-$OPTIPNG_VER.tar.gz;
