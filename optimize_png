@@ -15,8 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# First run (for autoinstall):
+#     cd path/to/optimize_png
+#     sudo ./optimize_png <path to PNG, if desired>
+# This downloads, builds (OptiPNG) and installs the required tools
+# to run this script to /usr/local/bin.
+# NOTE: export CC can be set before make install to compile OptiPNG
+# with desired toolchain.
+
 # Usage: optimize_png -a OR optimize_png /path/to/file.png
-#        Where '-a' does all PNGs recursively.
+#     Where '-a' does all PNGs recursively under the current dir.
 # Tip: Add to PATH.
 
 PNG_PATH=$1;
