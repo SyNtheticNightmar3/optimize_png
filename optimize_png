@@ -15,33 +15,43 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# First run (for autoinstall):
-#     cd path/to/optimize_png
-#     sudo ./optimize_png <path to PNG, if desired>
-# This downloads, builds (OptiPNG) and installs the required tools
-# to run this script to /usr/local/bin.
 # NOTE: export CC can be set before make install to compile OptiPNG
 # with desired toolchain.
-
-# Usage: optimize_png -a OR optimize_png /path/to/file.png
-#     Where '-a' does all PNGs recursively under the current dir.
-# Tip: Add to PATH.
 
 PNG_PATH=$@;
 OPTIPNG_VER=0.7.5;
 OPTIPNG_SHA1=30b6c333d74fc0f5dc83004aace252fa3321368b;
 PNGOUT_SHA1=37514b337adb672d982b4f98668b0300f177d8d2;
 
-while getopts ":a" opt
+while getopts ":a :h" opt
 do
     input_png=$(echo "$@" | sed "s/-$opt//")
     case "$opt" in
         a)
              PNG_PATH=$(find . -name \*.png)"$input_png";;
+        h)
+             HELP=true;;
         *)
              break;;
     esac
 done
+
+if [ "$HELP" == true ]; then
+    echo "Usage:";
+    echo "    optimize_png [option] files ...";
+    echo "Options:";
+    echo "    -h            Show this help";
+    echo "    -a            Optimize all PNGs under cur dir";
+    echo "Notes:";
+    echo "    This script is NOT meant to be sourced.";
+    echo "    It works best when included in PATH.";
+    echo "    It can be included by adding PATH=/path/to/script/dir:\$PATH";
+    echo "    to .bashrc or moved into a dir already included in PATH.";
+    echo "";
+    echo "    If the required tools to run this script are not installed,";
+    echo "    this script can be run as root for automatic install.";
+    exit;
+fi
 
 # OptiPNG autoinstall
 if ! type optipng &>/dev/null; then
