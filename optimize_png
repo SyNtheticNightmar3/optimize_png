@@ -114,6 +114,7 @@ if ! type pngout &>/dev/null; then
         arch=$(uname -m)
         if [ -d "pngout-20130221-linux/$arch" ]; then
             echo "Installing $arch pngout.";
+            mkdir -p /usr/local/bin;
             cp pngout-20130221-linux/$arch/pngout /usr/local/bin/pngout;
         else
             echo "PNGOUT does not support $arch.";
