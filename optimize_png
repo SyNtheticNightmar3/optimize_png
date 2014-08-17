@@ -140,7 +140,8 @@ elif [ "$PNG_PATH" ]; then
             echo "Compressing PNG with KS-Flate compression using PNGOUT...";
             pngout -f6 -kp -ks $png_file;
         else
-            echo "Invalid target png.";
+            echo "Invalid target png: $png_file";
+            break;
         fi
     done
 else
