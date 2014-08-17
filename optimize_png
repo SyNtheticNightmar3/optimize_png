@@ -45,7 +45,7 @@ done
 
 # OptiPNG autoinstall
 if ! type optipng &>/dev/null; then
-    MISSING_TOOL=true;
+    MISSING_TOOL="OptiPNG";
     echo "OptiPNG is not installed...";
     echo "";
     if [ `whoami` != "root" ]; then
@@ -75,7 +75,7 @@ if ! type optipng &>/dev/null; then
         make install;
         cd ..;
         if type optipng &>/dev/null; then
-            MISSING_TOOL=false;
+            MISSING_TOOL="";
             rm -rf optipng-$OPTIPNG_VER;
             echo "OptiPNG installed successfully.";
             echo "";
@@ -88,7 +88,7 @@ fi
 
 # PNGOUT autoinstall
 if ! type pngout &>/dev/null; then
-    MISSING_TOOL=true;
+    MISSING_TOOL="PNGOUT";
     echo "PNGOUT is not installed...";
     echo "";
     if [ `whoami` != "root" ]; then
@@ -119,7 +119,7 @@ if ! type pngout &>/dev/null; then
             echo "PNGOUT does not support $arch.";
         fi
         if type pngout &>/dev/null; then
-            MISSING_TOOL=false;
+            MISSING_TOOL="";
             rm -rf pngout-20130221-linux;
             echo "PNGOUT installed successfully.";
             echo "";
@@ -130,8 +130,8 @@ if ! type pngout &>/dev/null; then
     fi
 fi
 
-if [ "$MISSING_TOOL" == true ]; then
-    echo "Install OptiPNG and/or PNGOUT and try again.";
+if [ "$MISSING_TOOL" ]; then
+    echo "Install $MISSING_TOOL and try again.";
 elif [ "$PNG_PATH" ]; then
     for png_file in $PNG_PATH; do
         if [ -f "$png_file" ]; then
