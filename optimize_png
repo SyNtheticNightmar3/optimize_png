@@ -27,16 +27,17 @@
 #     Where '-a' does all PNGs recursively under the current dir.
 # Tip: Add to PATH.
 
-PNG_PATH=$1;
+PNG_PATH=$@;
 OPTIPNG_VER=0.7.5;
 OPTIPNG_SHA1=30b6c333d74fc0f5dc83004aace252fa3321368b;
 PNGOUT_SHA1=37514b337adb672d982b4f98668b0300f177d8d2;
 
 while getopts ":a" opt
 do
+    input_png=$(echo "$@" | sed "s/-$opt//")
     case "$opt" in
         a)
-             PNG_PATH=$(find . -name \*.png);;
+             PNG_PATH=$(find . -name \*.png)"$input_png";;
         *)
              break;;
     esac
