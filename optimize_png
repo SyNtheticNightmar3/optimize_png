@@ -20,17 +20,30 @@
 
 PNG_PATH=$@;
 OPTIPNG_VER=0.7.5;
+PNGOUT_VER=20130221;
+PNGQUANT_VER=2.3.0;
 OPTIPNG_SHA1=30b6c333d74fc0f5dc83004aace252fa3321368b;
 PNGOUT_SHA1=37514b337adb672d982b4f98668b0300f177d8d2;
+PNGQUANT_SHA1=d812aa08d394573122df392a4da8d50ca8df67ad;
 
-while getopts ":a :h" opt
+while getopts ":a :h :l" opt
 do
-    input_png=$(echo "$@" | sed "s/-$opt//")
+    input_png="`echo "$PNG_PATH" | sed "s/-$opt//"`";
     case "$opt" in
         a)
-             PNG_PATH=$(find . -name \*.png)"$input_png";;
+             all_png=`find . -name \*.png`;
+             PNG_PATH=$(echo "$all_png$input_png" | sed "s/ *$//");;
         h)
              HELP=true;;
+        l)
+             LOSSY=true;
+             PNG_PATH="$input_png";
+             echo "Lossy compression can take additional time to complete and requires libpng (1.5";
+             echo "or newer) to build and function properly.";
+             echo "While pngquant can be efficient, it may not reduce all PNGs in size; this script";
+             echo "will only use lossy compression if the resulting file is smaller.";
+             echo "";
+             read -p "Press [ENTER] to continue...";;
         *)
              break;;
     esac
@@ -42,8 +55,9 @@ if [ "$HELP" == true ]; then
     echo "Options:";
     echo "    -h            Show this help";
     echo "    -a            Optimize all PNGs under cur dir";
+    echo "    -l            Optimize using lossy compression (requires pngquant)";
     echo "Notes:";
-    echo "    This script is NOT meant to be sourced.";
+    echo "    This script is not meant to be sourced (ex: . optimize_png).";
     echo "    It works best when included in PATH.";
     echo "    It can be included by adding PATH=/path/to/script/dir:\$PATH";
     echo "    to .bashrc or moved into a dir already included in PATH.";
@@ -55,7 +69,7 @@ fi
 
 # OptiPNG autoinstall
 if ! type optipng &>/dev/null; then
-    MISSING_TOOL="OptiPNG";
+    MISSING_TOOL=`echo "OptiPNG"`;
     echo "OptiPNG is not installed...";
     echo "";
     if [ `whoami` != "root" ]; then
@@ -92,13 +106,14 @@ if ! type optipng &>/dev/null; then
         else
             echo "Something went wrong. OptiPNG not installed.";
             echo "";
+            exit;
         fi
     fi
 fi
 
 # PNGOUT autoinstall
 if ! type pngout &>/dev/null; then
-    MISSING_TOOL="PNGOUT";
+    MISSING_TOOL="$MISSING_TOOL `echo "PNGOUT"`";
     echo "PNGOUT is not installed...";
     echo "";
     if [ `whoami` != "root" ]; then
@@ -108,53 +123,130 @@ if ! type pngout &>/dev/null; then
     else
         echo "Automatic install will begin in 3 seconds...";
         sleep 3;
-        if [ ! -d "pngout-20130221-linux" ]; then
+        if [ ! -d "pngout-$PNGOUT_VER-linux" ]; then
             until [ "$potar_sha1" == "$PNGOUT_SHA1" ]; do
                 echo "Downloading & extracting PNGOUT tar...";
-                wget http://static.jonof.id.au/dl/kenutils/pngout-20130221-linux.tar.gz;
-                potar_sha1=`sha1sum "pngout-20130221-linux.tar.gz" | sed 's/ .*//'`;
+                wget http://static.jonof.id.au/dl/kenutils/pngout-$PNGOUT_VER-linux.tar.gz;
+                potar_sha1=`sha1sum "pngout-$PNGOUT_VER-linux.tar.gz" | sed 's/ .*//'`;
                 if [ "$potar_sha1" != "$PNGOUT_SHA1" ]; then
                     echo "SHA-1 checksum does not match! Redownloading...";
-                    rm -rf pngout-20130221-linux.tar.gz;
+                    rm -rf pngout-$PNGOUT_VER-linux.tar.gz;
                 fi
             done
-            tar xf pngout-20130221-linux.tar.gz;
-            rm -rf pngout-20130221-linux.tar.gz;
+            tar xf pngout-$PNGOUT_VER-linux.tar.gz;
+            rm -rf pngout-$PNGOUT_VER-linux.tar.gz;
         fi
         arch=$(uname -m)
-        if [ -d "pngout-20130221-linux/$arch" ]; then
+        if [ -d "pngout-$PNGOUT_VER-linux/$arch" ]; then
             echo "Installing $arch pngout.";
             mkdir -p /usr/local/bin;
-            cp pngout-20130221-linux/$arch/pngout /usr/local/bin/pngout;
+            cp pngout-$PNGOUT_VER-linux/$arch/pngout /usr/local/bin/pngout;
         else
             echo "PNGOUT does not support $arch.";
         fi
         if type pngout &>/dev/null; then
             MISSING_TOOL="";
-            rm -rf pngout-20130221-linux;
+            rm -rf pngout-$PNGOUT_VER-linux;
             echo "PNGOUT installed successfully.";
             echo "";
         else
             echo "Something went wrong. PNGOUT not installed.";
             echo "";
+            exit;
         fi
     fi
 fi
 
+if [ "$LOSSY" == "true" ]; then
+# pngquant autoinstall
+if ! type pngquant &>/dev/null; then
+    MISSING_TOOL="$MISSING_TOOL `echo "pngquant"`";
+    echo "pngquant is not installed...";
+    echo "";
+    if [ `whoami` != "root" ]; then
+        echo "Run as root for automatic install or install from";
+        echo "http://pngquant.org/";
+        echo "";
+        echo "NOTE: Requires libpng (1.5 or newer).";
+        echo "";
+    else
+        echo "Automatic install will begin in 3 seconds...";
+        sleep 3;
+        if [ ! -d "pngquant-$PNGQUANT_VER" ]; then
+            until [ "$pqtar_sha1" == "$PNGQUANT_SHA1" ]; do
+                echo "Downloading & extracting pngquant source tar...";
+                wget https://github.com/pornel/pngquant/archive/$PNGQUANT_VER.tar.gz;
+                pqtar_sha1=`sha1sum "$PNGQUANT_VER.tar.gz" | sed 's/ .*//'`;
+                if [ "$pqtar_sha1" != "$PNGQUANT_SHA1" ]; then
+                    echo "SHA-1 checksum does not match! Redownloading...";
+                    rm -rf $PNGQUANT_VER.tar.gz;
+                fi
+            done
+            tar xf $PNGQUANT_VER.tar.gz;
+            rm -rf $PNGQUANT_VER.tar.gz;
+        fi
+        echo "Installing pngquant-$PNGQUANT_VER.";
+        cd pngquant-$PNGQUANT_VER;
+        ./configure;
+#       export CC=~/gcc-toolchains/arm-none-linux-gnueabi-4.8.3/bin/arm-none-linux-gnueabi;
+        make install;
+        cd ..;
+        if type pngquant &>/dev/null; then
+            MISSING_TOOL="";
+            rm -rf pngquant-$PNGQUANT_VER;
+            echo "pngquant installed successfully.";
+            echo "";
+        else
+            echo "Something went wrong. pngquant not installed.";
+            echo "";
+            exit;
+        fi
+    fi
+fi
+fi # LOSSY
+
 if [ "$MISSING_TOOL" ]; then
-    echo "Install $MISSING_TOOL and try again.";
+    for tool in $MISSING_TOOL; do
+        echo "Install $tool and try again.";
+    done
 elif [ "$PNG_PATH" ]; then
     for png_file in $PNG_PATH; do
         if [ -f "$png_file" ]; then
+            prev_png_size=$(($prev_png_size + $(du -b "$png_file" | cut -f 1)));
+            if [ "$LOSSY" == true ]; then
+                echo "Optimizing PNG using pngquant for lossy compression...";
+                pngquant --speed=1 256 $png_file;
+                opt_file=$(echo "$png_file" | sed "s/.png/-fs8.png/g");
+                optfile_size=$(du -b "$opt_file" | cut -f 1);
+                pngfile_size=$(du -b "$png_file" | cut -f 1);
+                if [ "$optfile_size" -lt "$pngfile_size" ]; then # Only apply lossy compression if result is smaller
+                    mv -f -T $opt_file $png_file;
+                    echo "Lossy compression successful for: $png_file";
+                else
+                    rm -rf $opt_file;
+                    echo "Lossy compression resulted in a larger file for: $png_file";
+                    echo "Skipping...";
+                fi
+            fi
             echo "Optimizing PNG using OptiPNG for reduction...";
             optipng -o5 -strip all $png_file;
             echo "Compressing PNG with KS-Flate compression using PNGOUT...";
             pngout -f6 -kp -ks $png_file;
+            curr_png_size=$(($curr_png_size + $(du -b "$png_file" | cut -f 1)));
         else
             echo "Invalid target png: $png_file";
             break;
         fi
     done
+    png_reduction=$(echo "$prev_png_size-$curr_png_size" | bc);
+    png_remainder=$(echo "scale=0;$curr_png_size/$prev_png_size*100" | bc);
+    echo "";
+    echo "Total Results:";
+    echo "    Old size: $prev_png_size bytes";
+    echo "    New size: $curr_png_size bytes";
+    echo "    Reduced:  $png_reduction bytes ($png_remainder% of original total size)";
+    exit;
 else
     echo "No target png.";
+    exit;
 fi
