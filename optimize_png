@@ -239,7 +239,7 @@ elif [ "$PNG_PATH" ]; then
         fi
     done
     png_reduction=$(echo "$prev_png_size-$curr_png_size" | bc);
-    png_remainder=$(echo "scale=0;$curr_png_size/$prev_png_size*100" | bc);
+    png_remainder=$(echo "scale=4;$curr_png_size/$prev_png_size*100" | bc | sed "s/[0]*$//");
     echo "";
     echo "Total Results:";
     echo "    Old size: $prev_png_size bytes";
